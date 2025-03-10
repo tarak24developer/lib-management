@@ -160,7 +160,7 @@ public class BooksPanel extends JPanel {
         // Create bottom panel with borrowing history
         JPanel bottomPanel = new JPanel(new BorderLayout());
         bottomPanel.setBorder(BorderFactory.createTitledBorder("Borrowing History"));
-        String[] historyColumns = {"Book Title", "User", "Borrow Date", "Return Date", "Status"};
+        String[] historyColumns = {"Book Title", "User", "Borrow Date", "Due Date", "Return Date", "Status"};
         historyTableModel = new DefaultTableModel(historyColumns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -252,6 +252,45 @@ public class BooksPanel extends JPanel {
                 refreshHistoryTable();
             }
         });
+
+        // Add overdue books tab
+        JTabbedPane tabbedPane = new JTabbedPane();
+        tabbedPane.addTab("Books", splitPane);
+        tabbedPane.addTab("Overdue Books", createOverdueBooksPanel());
+        add(tabbedPane, BorderLayout.CENTER);
+    }
+
+    private JPanel createOverdueBooksPanel() {
+        JPanel overdueBooksPanel = new JPanel(new BorderLayout());
+        String[] columns = {"Book Title", "User", "Borrow Date", "Due Date", "Status"};
+        DefaultTableModel overdueTableModel = new DefaultTableModel(columns, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+        JTable overdueBooksTable = new JTable(overdueTableModel);
+        JScrollPane scrollPane = new JScrollPane(overdueBooksTable);
+        overdueBooksPanel.add(scrollPane, BorderLayout.CENTER);
+
+        // Populate overdue books table
+        List<Book> books = dataService.getAllBooks();
+        for (Book book : books) {
+            for (Book.BorrowRecord record : book.getBorrowRecords()) {
+                if (!record.isReturned() && record.getDueDate() < System.currentTimeMillis()) {
+                    Object[] row = {
+                        book.getTitle(),
+                        record.getUserName(),
+                        dateFormat.format(new Date(record.getBorrowDate())),
+                        dateFormat.format(new Date(record.getDueDate())),
+                        "Overdue"
+                    };
+                    overdueTableModel.addRow(row);
+                }
+            }
+        }
+
+        return overdueBooksPanel;
     }
 
     private void showAddBookDialog() {
@@ -364,6 +403,7 @@ public class BooksPanel extends JPanel {
                         book.getTitle(),
                         record.getUserName(),
                         dateFormat.format(new Date(record.getBorrowDate())),
+                        dateFormat.format(new Date(record.getDueDate())), // Display due date
                         record.isReturned() ? dateFormat.format(new Date(record.getReturnDate())) : "Not returned",
                         record.isReturned() ? "Returned" : "Borrowed"
                     };

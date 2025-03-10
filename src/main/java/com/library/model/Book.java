@@ -25,11 +25,13 @@ public class Book {
         private String userName;
         private long borrowDate;
         private long returnDate;
+        private long dueDate; // New field for due date
         private boolean isReturned;
 
         // Default constructor for GSON
         public BorrowRecord() {
             this.borrowDate = System.currentTimeMillis();
+            this.dueDate = this.borrowDate + (14 * 24 * 60 * 60 * 1000L); // Set due date to 14 days from borrow date
             this.isReturned = false;
         }
 
@@ -51,6 +53,9 @@ public class Book {
         
         public long getReturnDate() { return returnDate; }
         public void setReturnDate(long returnDate) { this.returnDate = returnDate; }
+        
+        public long getDueDate() { return dueDate; } // Getter for due date
+        public void setDueDate(long dueDate) { this.dueDate = dueDate; } // Setter for due date
         
         public boolean isReturned() { return isReturned; }
         public void setReturned(boolean returned) { isReturned = returned; }
@@ -113,4 +118,4 @@ public class Book {
     public String toString() {
         return title + " by " + author;
     }
-} 
+}

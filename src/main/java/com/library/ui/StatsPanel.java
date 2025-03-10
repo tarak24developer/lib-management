@@ -20,6 +20,7 @@ public class StatsPanel extends JPanel implements PropertyChangeListener {
     private JLabel borrowedBooksLabel;
     private JLabel totalUsersLabel;
     private JLabel activeUsersLabel;
+    private JLabel overdueBooksLabel; // New label for overdue books
     private JTextArea popularBooksArea;
     private JTextArea activeReadersArea;
     private SimpleDateFormat dateFormat;
@@ -47,12 +48,14 @@ public class StatsPanel extends JPanel implements PropertyChangeListener {
         borrowedBooksLabel = createStatsLabel("Borrowed Books: 0");
         totalUsersLabel = createStatsLabel("Total Users: 0");
         activeUsersLabel = createStatsLabel("Active Users: 0");
+        overdueBooksLabel = createStatsLabel("Overdue Books: 0"); // New label for overdue books
 
         quickStatsPanel.add(totalBooksLabel);
         quickStatsPanel.add(availableBooksLabel);
         quickStatsPanel.add(borrowedBooksLabel);
         quickStatsPanel.add(totalUsersLabel);
         quickStatsPanel.add(activeUsersLabel);
+        quickStatsPanel.add(overdueBooksLabel); // Add overdue books label
 
         // Bottom panel for detailed stats
         JPanel detailedStatsPanel = new JPanel(new GridLayout(1, 2, 10, 10));
@@ -108,6 +111,10 @@ public class StatsPanel extends JPanel implements PropertyChangeListener {
         int activeUsers = (int) users.stream()
             .filter(user -> !user.getBorrowedBooks().isEmpty())
             .count();
+        int overdueBooks = (int) books.stream()
+            .flatMap(book -> book.getBorrowRecords().stream())
+            .filter(record -> !record.isReturned() && record.getDueDate() < System.currentTimeMillis())
+            .count();
 
         // Update basic stats labels
         totalBooksLabel.setText("Total Books: " + totalBooks);
@@ -115,6 +122,7 @@ public class StatsPanel extends JPanel implements PropertyChangeListener {
         borrowedBooksLabel.setText("Borrowed Books: " + borrowedBooks);
         totalUsersLabel.setText("Total Users: " + totalUsers);
         activeUsersLabel.setText("Active Users: " + activeUsers);
+        overdueBooksLabel.setText("Overdue Books: " + overdueBooks); // Update overdue books label
 
         // Calculate popular books
         Map<String, Integer> bookBorrowCounts = new HashMap<>();
@@ -163,4 +171,4 @@ public class StatsPanel extends JPanel implements PropertyChangeListener {
         }
         activeReadersArea.setText(activeReadersText.toString());
     }
-} 
+}
