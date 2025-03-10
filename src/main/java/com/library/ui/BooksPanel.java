@@ -15,6 +15,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+import java.util.Random;
 
 public class BooksPanel extends JPanel {
     private final DataService dataService;
@@ -31,6 +32,60 @@ public class BooksPanel extends JPanel {
         this.dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
         setupUI();
         refreshTable();
+    }
+
+    private void showReturnDialog(Book book) {
+        List<Book.BorrowRecord> activeRecords = new ArrayList<>();
+        for (Book.BorrowRecord record : book.getBorrowRecords()) {
+            if (!record.isReturned()) {
+                activeRecords.add(record);
+            }
+        }
+
+        if (activeRecords.isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                "No active borrowers for this book",
+                "Error",
+                JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        String[] borrowers = activeRecords.stream()
+            .map(record -> record.getUserName())
+            .toArray(String[]::new);
+
+        String selectedBorrower = (String) JOptionPane.showInputDialog(
+            this,
+            "Select user returning the book:",
+            "Return Book",
+            JOptionPane.QUESTION_MESSAGE,
+            null,
+            borrowers,
+            borrowers[0]);
+
+        if (selectedBorrower != null) {
+            Book.BorrowRecord record = activeRecords.get(Arrays.asList(borrowers).indexOf(selectedBorrower));
+            User user = dataService.getUserById(record.getUserId());
+            if (user != null) {
+                book.returnBook(user.getId());
+                user.returnBook(book.getId());
+                dataService.updateBook(book);
+                dataService.updateUser(user);
+                refreshTable();
+                refreshHistoryTable();
+                firePropertyChange("REFRESH_USERS", null, null);
+
+                // Generate random points between 10 and 60
+                Random random = new Random();
+                int points = 10 + random.nextInt(51);
+
+                // Show message dialog
+                JOptionPane.showMessageDialog(this,
+                    "Book returned successfully. " + user.getName() + " has earned " + points + " points!",
+                    "Book Returned",
+                    JOptionPane.INFORMATION_MESSAGE);
+            }
+        }
     }
     
     private void setupUI() {
@@ -287,51 +342,6 @@ public class BooksPanel extends JPanel {
             firePropertyChange("REFRESH_USERS", null, null);
             JOptionPane.showMessageDialog(this,
                 "Book borrowed successfully by " + selectedUser.getName());
-        }
-    }
-
-    private void showReturnDialog(Book book) {
-        List<Book.BorrowRecord> activeRecords = new ArrayList<>();
-        for (Book.BorrowRecord record : book.getBorrowRecords()) {
-            if (!record.isReturned()) {
-                activeRecords.add(record);
-            }
-        }
-
-        if (activeRecords.isEmpty()) {
-            JOptionPane.showMessageDialog(this,
-                "No active borrowers for this book",
-                "Error",
-                JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        String[] borrowers = activeRecords.stream()
-            .map(record -> record.getUserName())
-            .toArray(String[]::new);
-
-        String selectedBorrower = (String) JOptionPane.showInputDialog(
-            this,
-            "Select user returning the book:",
-            "Return Book",
-            JOptionPane.QUESTION_MESSAGE,
-            null,
-            borrowers,
-            borrowers[0]);
-
-        if (selectedBorrower != null) {
-            Book.BorrowRecord record = activeRecords.get(Arrays.asList(borrowers).indexOf(selectedBorrower));
-            User user = dataService.getUserById(record.getUserId());
-            if (user != null) {
-                book.returnBook(user.getId());
-                user.returnBook(book.getId());
-                dataService.updateBook(book);
-                dataService.updateUser(user);
-                refreshTable();
-                refreshHistoryTable();
-                firePropertyChange("REFRESH_USERS", null, null);
-                JOptionPane.showMessageDialog(this, "Book returned successfully");
-            }
         }
     }
 
