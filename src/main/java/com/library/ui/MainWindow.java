@@ -43,6 +43,7 @@ public class MainWindow extends JFrame {
         tabbedPane.addTab("Books", booksPanel);
         tabbedPane.addTab("Users", usersPanel);
         tabbedPane.addTab("Statistics", statsPanel);
+        tabbedPane.addTab("Blocklisted Users", booksPanel.createBlocklistedUsersPanel()); // Add blocklisted users tab
         
         // Add to frame
         add(tabbedPane);
@@ -72,4 +73,4 @@ public class MainWindow extends JFrame {
             window.setVisible(true);
         });
     }
-} 
+}

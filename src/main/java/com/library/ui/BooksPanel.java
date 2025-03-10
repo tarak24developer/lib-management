@@ -257,6 +257,7 @@ public class BooksPanel extends JPanel {
         JTabbedPane tabbedPane = new JTabbedPane();
         tabbedPane.addTab("Books", splitPane);
         tabbedPane.addTab("Overdue Books", createOverdueBooksPanel());
+        tabbedPane.addTab("Blocklisted Users", createBlocklistedUsersPanel()); // Add blocklisted users tab
         add(tabbedPane, BorderLayout.CENTER);
     }
 
@@ -291,6 +292,35 @@ public class BooksPanel extends JPanel {
         }
 
         return overdueBooksPanel;
+    }
+
+    public JPanel createBlocklistedUsersPanel() { // Changed to public
+        JPanel blocklistedUsersPanel = new JPanel(new BorderLayout());
+        String[] columns = {"ID", "Name", "Email"};
+        DefaultTableModel blocklistedTableModel = new DefaultTableModel(columns, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+        JTable blocklistedUsersTable = new JTable(blocklistedTableModel);
+        JScrollPane scrollPane = new JScrollPane(blocklistedUsersTable);
+        blocklistedUsersPanel.add(scrollPane, BorderLayout.CENTER);
+
+        // Populate blocklisted users table
+        List<User> users = dataService.getAllUsers();
+        for (User user : users) {
+            if (user.isBlocklisted()) {
+                Object[] row = {
+                    user.getId(),
+                    user.getName(),
+                    user.getEmail()
+                };
+                blocklistedTableModel.addRow(row);
+            }
+        }
+
+        return blocklistedUsersPanel;
     }
 
     private void showAddBookDialog() {
@@ -451,5 +481,30 @@ public class BooksPanel extends JPanel {
     private void refreshTable() {
         applyFilters();
         refreshHistoryTable();
+    }
+
+    public void blocklistOverdueUsers() { // Changed to public
+        List<User> users = dataService.getAllUsers();
+        long currentTime = System.currentTimeMillis();
+        long oneMonthInMillis = 30L * 24 * 60 * 60 * 1000;
+
+        for (User user : users) {
+            for (String bookId : user.getBorrowedBooks()) {
+                Book book = dataService.getAllBooks().stream()
+                    .filter(b -> b.getId().equals(bookId))
+                    .findFirst()
+                    .orElse(null);
+
+                if (book != null) {
+                    for (Book.BorrowRecord record : book.getBorrowRecords()) {
+                        if (!record.isReturned() && (currentTime - record.getDueDate()) > oneMonthInMillis) {
+                            user.setBlocklisted(true);
+                            dataService.updateUser(user);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
     }
 }
