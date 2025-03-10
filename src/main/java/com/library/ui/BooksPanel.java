@@ -368,8 +368,14 @@ public class BooksPanel extends JPanel {
         }
 
         JComboBox<User> userComboBox = new JComboBox<>(users.toArray(new User[0]));
+        JSpinner dueDateSpinner = new JSpinner(new SpinnerDateModel());
+        JSpinner.DateEditor dateEditor = new JSpinner.DateEditor(dueDateSpinner, "yyyy-MM-dd");
+        dueDateSpinner.setEditor(dateEditor);
+        dueDateSpinner.setValue(new Date()); // Set current date as default
+
         Object[] message = {
-            "Select user:", userComboBox
+            "Select user:", userComboBox,
+            "Due date:", dueDateSpinner
         };
 
         int option = JOptionPane.showConfirmDialog(this,
@@ -379,7 +385,8 @@ public class BooksPanel extends JPanel {
 
         if (option == JOptionPane.OK_OPTION) {
             User selectedUser = (User) userComboBox.getSelectedItem();
-            book.borrowBook(selectedUser);
+            Date dueDate = (Date) dueDateSpinner.getValue();
+            book.borrowBook(selectedUser, dueDate.getTime());
             selectedUser.borrowBook(book.getId());
             dataService.updateBook(book);
             dataService.updateUser(selectedUser);

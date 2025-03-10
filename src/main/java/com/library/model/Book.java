@@ -104,6 +104,14 @@ public class Book {
         }
     }
 
+    public void borrowBook(User user, long dueDate) {
+        if (isAvailable()) {
+            BorrowRecord record = new BorrowRecord(user.getId(), user.getName());
+            record.setDueDate(dueDate);
+            borrowRecords.add(record);
+        }
+    }
+
     public boolean returnBook(String userId) {
         for (BorrowRecord record : borrowRecords) {
             if (record.getUserId().equals(userId) && !record.isReturned) {
