@@ -79,6 +79,13 @@ public class BooksPanel extends JPanel {
                 Random random = new Random();
                 int points = 10 + random.nextInt(51);
 
+                // Add points to user's reward points
+                user.setRewardPoints(user.getRewardPoints() + points);
+                dataService.updateUser(user);
+
+                // Fire property change event to refresh users tab
+                firePropertyChange("REFRESH_USERS", null, null);
+
                 // Show message dialog
                 JOptionPane.showMessageDialog(this,
                     "Book returned successfully. " + user.getName() + " has earned " + points + " points!",
@@ -398,4 +405,4 @@ public class BooksPanel extends JPanel {
         applyFilters();
         refreshHistoryTable();
     }
-} 
+}
